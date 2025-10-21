@@ -1,0 +1,30 @@
+# Node modules
+node_modules/
+
+# Build output folders
+dist/
+build/
+out/
+
+# Git files
+.git/
+.gitignore
+
+# Logs
+*.log
+
+# Dependency directories (if any others besides node_modules)
+vendor/
+
+# Lock files (usually don't format these)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+
+# Ignore generated files
+*.min.js
+*.bundle.js
+
+# Ignore files handled by other tools (optional)
+coverage/
