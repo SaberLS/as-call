@@ -22,4 +22,15 @@ abstract class Response<TPayload, TError> {
   }
 }
 
-export { Response }
+class ResponseSuccess<TPayload> extends Response<TPayload, never> {
+  constructor(payload: TPayload) {
+    super(true, payload)
+  }
+}
+
+class ResponseFailure<TError> extends Response<unknown, TError> {
+  constructor(payload: unknown, error: TError) {
+    super(false, payload, error)
+  }
+}
+export { Response, ResponseFailure, ResponseSuccess }
