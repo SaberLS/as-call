@@ -25,6 +25,6 @@
     "target": "ES2020",
     "verbatimModuleSyntax": true
   },
-  "exclude": ["dist"],
-  "include": ["src"]
+  "exclude": ["dist/**/*"],
+  "include": ["src/**/*"]
 }
