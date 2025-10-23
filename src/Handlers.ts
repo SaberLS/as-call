@@ -1,50 +1,63 @@
-abstract class Handlers<TPayload, TSuccessRes, TFailureRes> {
-  protected onStart: OnStart | undefined
-  protected onSuccess: Handler<TSuccessRes> | undefined
-  protected onFailure: Handler<TFailureRes> | undefined
-  protected onFinal: Handler<TSuccessRes | TFailureRes> | undefined
+import { ResponseFailure, type ResponseSuccess } from './Response/Response'
 
-  constructor(handlers?: Partial<Options<TSuccessRes, TFailureRes>>) {
+abstract class Handlers<
+  TPayload,
+  TError extends Error,
+  TSuccessBuilder extends (...args: never[]) => TSuccess,
+  TFailureBuilder extends (...args: never[]) => TFailure,
+  TSuccess extends ResponseSuccess<TPayload>,
+  TFailure extends ResponseFailure<TError>,
+> {
+  protected onStart: OnStart | undefined
+  protected onSuccess: OnSuccess<TSuccess> | undefined
+  protected onFailure: OnFailure<TFailure> | undefined
+  protected onFinal: OnFinal<TSuccess | TFailure> | undefined
+
+  constructor(handlers?: Partial<Options<TSuccess, TFailure>>) {
     this.onStart = handlers?.onStart
     this.onSuccess = handlers?.onSuccess
     this.onFailure = handlers?.onFailure
     this.onFinal = handlers?.onFinal
   }
 
-  protected abstract buildSuccessResult: (payload: TPayload) => TSuccessRes
-  protected abstract buildFailureResult: (payload: unknown) => TFailureRes
+  protected abstract buildSuccessResult: TSuccessBuilder
+  protected abstract buildFailureResult: TFailureBuilder
 
   handleStart = () => {
     this.onStart?.()
   }
 
-  handleSuccess = (payload: TPayload) => {
-    const response = this.buildSuccessResult(payload)
+  handleSuccess = (...args: Parameters<TSuccessBuilder>) => {
+    const response = this.buildSuccessResult(...args)
     this.onSuccess?.(response)
 
     return response
   }
 
-  handleFailure = (payload: unknown) => {
-    const response = this.buildFailureResult(payload)
+  handleFailure = (...args: Parameters<TFailureBuilder>) => {
+    const response = this.buildFailureResult(...args)
     this.onFailure?.(response)
 
     return response
   }
 
-  handleFinal = (response: TSuccessRes | TFailureRes) => {
+  handleFinal = (response: TSuccess | TFailure) => {
     this.onFinal?.(response)
   }
 }
 
-interface Options<TSuccessRes, TFailureRes> {
-  onStart: () => void
-  onSuccess: Handler<TSuccessRes>
-  onFailure: Handler<TFailureRes>
-  onFinal: Handler<TSuccessRes | TFailureRes>
+interface Options<TSuccess, TFailure> {
+  onStart: OnStart
+  onSuccess: OnSuccess<TSuccess>
+  onFailure: OnFailure<TFailure>
+  onFinal: OnFinal<TSuccess | TFailure>
 }
 
 type Handler<TResponse> = (response: TResponse) => void
+
 type OnStart = () => void
+type OnSuccess<TSuccess> = Handler<TSuccess>
+type OnFailure<TFailure> = Handler<TFailure>
+type OnFinal<TResponse> = Handler<TResponse>
 
 export { Handlers }
