@@ -1,4 +1,4 @@
-abstract class Response<TPayload, TError> {
+abstract class Response<TPayload, TError extends Error> {
   protected payload: TPayload | undefined
   protected error: TError | undefined
   protected success: boolean
@@ -28,7 +28,7 @@ class ResponseSuccess<TPayload> extends Response<TPayload, never> {
   }
 }
 
-class ResponseFailure<TError> extends Response<unknown, TError> {
+class ResponseFailure<TError extends Error> extends Response<unknown, TError> {
   constructor(payload: unknown, error: TError) {
     super(false, payload, error)
   }
