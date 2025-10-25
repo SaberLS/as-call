@@ -2,7 +2,7 @@ import { ASCallHandlers } from './ASCallHandlers'
 import type { ResponseFailure, ResponseSuccess } from './Response/Response'
 
 // TODO add ability to use diffrent handlers not only ASCallHandlers
-abstract class BaseASCall<
+abstract class ASCallBase<
   TPayload,
   TCallParams extends unknown[],
   TGetParams extends unknown[] = TCallParams,
@@ -90,4 +90,5 @@ interface Options<
   getArgs: GetArgs<TGetParams, TCallParams>
 }
 
-export { BaseASCall }
+export { ASCallBase }
+export type { GetArgs, Options, Reguest }
