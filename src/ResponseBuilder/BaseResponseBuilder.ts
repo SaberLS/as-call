@@ -1,48 +1,73 @@
-import type { ResponseFailure, ResponseSuccess } from '../Response/Response'
+import {
+  Response,
+  type ResponseFailure,
+  type ResponseSuccess,
+} from '../Response/Response'
 
 abstract class BaseResponseBuilder<
   TPayload,
   TError extends Error,
+  TStart,
   TFailure extends ResponseFailure<TError>,
   TSuccess extends ResponseSuccess<TPayload>,
-> {
-  private _payload!: TPayload
-  private _error!: TError
-  private _success = false
+> extends Response<TPayload, TError> {
   private _initialized = false
 
-  reset = () => {
+  reset() {
     this._initialized = false
+
+    this.setError(undefined)
+    this.setPayload(undefined)
+    this.setSuccess(false)
   }
-  init = () => {
+
+  init() {
     this._initialized = true
+    return this.start()
   }
 
-  getPayload = () => this._payload
-  getError = () => this._error
-
-  setPayload = (payload: TPayload) => {
-    this._payload = payload
+  getPayload() {
+    this.initGuard()
+    return super.getPayload()!
   }
 
-  setError = (error: TError) => {
-    this._error = error
+  getError() {
+    this.initGuard()
+    return super.getError()!
   }
 
-  setSuccess = (success: boolean) => {
-    this._success = success
+  isInitialized() {
+    return this._initialized
   }
 
-  build = () => {
-    if (!this._initialized) throw new Error('Builder not initialized')
-
-    const response = this._success ? this.succed() : this.fail()
-    this.reset()
-    return response
+  setPayload(payload: TPayload | undefined) {
+    this.initGuard()
+    this.payload = payload
   }
 
-  abstract succed: () => TSuccess
-  abstract fail: () => TFailure
+  setError(error: TError | undefined) {
+    this.initGuard()
+    this.error = error
+  }
+
+  setSuccess(success: boolean) {
+    this.initGuard()
+    this.success = success
+  }
+
+  initGuard() {
+    if (this.isInitialized()) throw new Error('Builder not initialized')
+  }
+
+  build() {
+    this.initGuard()
+
+    return this.isSuccessfull() ? this.succed() : this.fail()
+  }
+
+  abstract start(): TStart
+  abstract succed(): TSuccess
+  abstract fail(): TFailure
 }
 
 export { BaseResponseBuilder }
