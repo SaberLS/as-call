@@ -1,22 +1,42 @@
-import { ASCallHandlers } from './ASCallHandlers'
+import type { Handlers } from './Handlers'
 import type { ResponseFailure, ResponseSuccess } from './Response/Response'
+import type { BaseResponseBuilder } from './ResponseBuilder/BaseResponseBuilder'
 
 // TODO add ability to use diffrent handlers not only ASCallHandlers
 abstract class ASCallBase<
   TPayload,
   TCallParams extends unknown[],
-  TGetParams extends unknown[] = TCallParams,
+  TResponseSuccess extends ResponseSuccess<TPayload>,
+  TResponseFailure extends ResponseFailure<TError>,
+  TResponseBuilder extends BaseResponseBuilder<
+    TPayload,
+    TError,
+    TStart,
+    TResponseFailure,
+    TResponseSuccess
+  >,
+  TStart,
   TError extends Error = Error,
+  THandlers extends Handlers<
+    TPayload,
+    TError,
+    TStart,
+    TResponseSuccess,
+    TResponseFailure
+  > = Handlers<TPayload, TError, TStart, TResponseSuccess, TResponseFailure>,
+  TGetParams extends unknown[] = TCallParams,
 > {
+  abstract readonly responseBuilder: TResponseBuilder
+  abstract readonly handlers: THandlers
+
   readonly request: Reguest<TCallParams, TPayload>
   readonly getArgs?: GetArgs<TGetParams, TCallParams> | undefined
 
   readonly name: string
-  abstract readonly handlers: ASCallHandlers<TPayload, TError>
 
   constructor(
     request: Reguest<TCallParams, TPayload>,
-    options?: Partial<Options<TPayload, TCallParams, TGetParams, TError>>
+    options?: Partial<Options<TCallParams, TGetParams>>
   ) {
     this.request = request
     this.name = options?.name ?? request.name
@@ -24,7 +44,7 @@ abstract class ASCallBase<
     this.getArgs = options?.getArgs
   }
 
-  protected async getParameters(
+  private async getParameters(
     ...args: TCallParams | TGetParams
   ): Promise<TCallParams> {
     const parameters =
@@ -48,23 +68,30 @@ abstract class ASCallBase<
     // if getArgs is undefined take arguments of Call
     ...args: this['getArgs'] extends undefined ? TCallParams : TGetParams
   ) {
-    let result!: ResponseFailure<TError> | ResponseSuccess<TPayload>
-
     try {
-      // TODO handleStart and other handlers methods should take `parameters`
       const parameters = await this.getParameters(...args)
-      this.handlers.handleStart(/*parameters*/)
+      this.handlers.handleStart(this.responseBuilder.init())
 
-      const res = await this.makeRequest(...parameters)
-      result = this.handlers.handleSuccess(res)
+      const payload = await this.makeRequest(...parameters)
+      this.responseBuilder.setPayload(payload)
+      this.responseBuilder.setSuccess(true)
+
+      this.handlers.handleSuccess(this.responseBuilder.succed())
     } catch (error_: unknown) {
       const error: TError = await this.parseError(error_)
-      result = this.handlers.handleFailure(result, error /*, parameters*/)
+      this.responseBuilder.setError(error)
+
+      this.handlers.handleFailure(this.responseBuilder.fail())
     } finally {
-      this.handlers.handleFinal(result)
+      this.handlers.handleFinal(
+        this.responseBuilder.isSuccessfull() ?
+          this.responseBuilder.succed()
+        : this.responseBuilder.fail()
+      )
     }
 
-    return result
+    const build = this.responseBuilder.build()
+    return build
   }
 }
 
@@ -76,14 +103,8 @@ type Reguest<TCallParams extends unknown[], TPayload> = (
   ...args: TCallParams
 ) => Promise<TPayload>
 
-interface Options<
-  TPayload,
-  TCallParams extends unknown[],
-  TGetParams extends unknown[],
-  TError extends Error = Error,
-> {
+interface Options<TCallParams extends unknown[], TGetParams extends unknown[]> {
   name: string
-  handlers: ConstructorParameters<typeof ASCallHandlers<TPayload, TError>>['0']
   getArgs: GetArgs<TGetParams, TCallParams>
 }
 
