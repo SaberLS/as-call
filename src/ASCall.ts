@@ -1,10 +1,21 @@
-import { BaseASCall } from './BaseASCall'
+import { ASCallBase, type Options, type Reguest } from './ASCallBase'
+import { ASCallHandlers } from './ASCallHandlers'
 
 class ASCall<
   TPayload,
   TCallParams extends unknown[],
   TGetParams extends unknown[] = TCallParams,
-> extends BaseASCall<TPayload, TCallParams, TGetParams> {
+> extends ASCallBase<TPayload, TCallParams, TGetParams, Error> {
+  readonly handlers: ASCallHandlers<TPayload, Error>
+
+  constructor(
+    request: Reguest<TCallParams, TPayload>,
+    options?: Partial<Options<TPayload, TCallParams, TGetParams, Error>>
+  ) {
+    super(request, options)
+
+    this.handlers = new ASCallHandlers<TPayload, Error>(options?.handlers)
+  }
   parseError(error_: unknown): Error | Promise<Error> {
     if (error_ instanceof Error) return error_
 
@@ -13,18 +24,3 @@ class ASCall<
 }
 
 export { ASCall }
-
-// -------- EXAMPLE -------
-const t = async (a: number) => await Promise.resolve(a)
-const ast = new ASCall(t, {
-  getArgs: (a: string) => {
-    return Promise.resolve([Number(a)])
-  },
-})
-
-// @ts-expect-error shows type error expects the arguments of type [a: string] from passed get args
-await ast.call(3)
-
-const ast2 = new ASCall(t)
-// @ts-expect-error shows type error expects the arguments of t [a: number] from passed request
-await ast2.call('3')

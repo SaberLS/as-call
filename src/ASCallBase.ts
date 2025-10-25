@@ -12,7 +12,7 @@ abstract class ASCallBase<
   readonly getArgs?: GetArgs<TGetParams, TCallParams> | undefined
 
   readonly name: string
-  readonly handlers: ASCallHandlers<TPayload, TError>
+  abstract readonly handlers: ASCallHandlers<TPayload, TError>
 
   constructor(
     request: Reguest<TCallParams, TPayload>,
@@ -20,9 +20,6 @@ abstract class ASCallBase<
   ) {
     this.request = request
     this.name = options?.name ?? request.name
-    this.handlers = new ASCallHandlers<TPayload, TError>(
-      options?.handlers?.['0']
-    )
 
     this.getArgs = options?.getArgs
   }
@@ -59,7 +56,7 @@ abstract class ASCallBase<
       this.handlers.handleStart(/*parameters*/)
 
       const res = await this.makeRequest(...parameters)
-      result = this.handlers.handleSuccess(res /*, parameters*/)
+      result = this.handlers.handleSuccess(res)
     } catch (error_: unknown) {
       const error: TError = await this.parseError(error_)
       result = this.handlers.handleFailure(result, error /*, parameters*/)
@@ -86,7 +83,7 @@ interface Options<
   TError extends Error = Error,
 > {
   name: string
-  handlers: ConstructorParameters<typeof ASCallHandlers<TPayload, TError>>
+  handlers: ConstructorParameters<typeof ASCallHandlers<TPayload, TError>>['0']
   getArgs: GetArgs<TGetParams, TCallParams>
 }
 
