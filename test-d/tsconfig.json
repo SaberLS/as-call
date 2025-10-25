@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "rootDir": "../",
+    "types": ["node"],
+    "strictNullChecks": true
+  },
+  "exclude": ["../node_modules", "../dist"],
+  "extends": "../tsconfig.json",
+  "include": ["."]
+}

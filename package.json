@@ -6,6 +6,7 @@
   "author": "",
   "type": "module",
   "main": "index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "clean": "rimraf dist",
     "clean:all": "rimraf dist node_modules",
@@ -15,27 +16,29 @@
     "lint:check": "eslint \"**/*.{ts,tsx,mts,cts,cjs,mjs,js,jsx,md}\"",
     "lint:fix": "eslint --fix \"**/*.{ts,tsx,mts,cts,cjs,mjs,js,jsx,md}\"",
     "prepare": "husky",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --config __tests__/jest.config.ts",
+    "test:types": "tsd"
   },
   "lint-staged": {
     "*.{ts,mts,cts,tsx,js,mjs,cjs,jsx}": [
       "eslint --fix",
       "prettier --write"
     ],
+    "!test-d/**/*.ts": [],
     "*.{json,css,scss,md}": [
       "prettier --write"
     ]
   },
-  "dependencies": {
-    "axios": "^1.11.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@eslint/js": "^9.34.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.3.0",
     "@typescript-eslint/eslint-plugin": "^8.41.0",
     "@typescript-eslint/parser": "^8.41.0",
+    "esbuild-jest": "^0.5.0",
     "eslint": "^9.34.0",
+    "eslint-plugin-jest": "^29.0.1",
     "eslint-plugin-unicorn": "^60.0.0",
     "globals": "^16.3.0",
     "husky": "^9.1.7",
@@ -48,7 +51,17 @@
     "prettier-plugin-sort-json": "^4.1.1",
     "rimraf": "^6.0.1",
     "ts-jest": "^29.4.1",
+    "tsd": "^0.33.0",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.41.0"
+  },
+  "tsd": {
+    "directory": "src",
+    "compilerOptions": {
+      "target": "es2022",
+      "lib": [
+        "es2022"
+      ]
+    }
   }
 }
