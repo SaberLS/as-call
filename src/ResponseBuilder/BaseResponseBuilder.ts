@@ -56,7 +56,7 @@ abstract class BaseResponseBuilder<
   }
 
   initGuard() {
-    if (this.isInitialized()) throw new Error('Builder not initialized')
+    if (!this.isInitialized()) throw new Error('Builder not initialized')
   }
 
   build() {
