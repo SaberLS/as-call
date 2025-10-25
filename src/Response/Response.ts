@@ -3,7 +3,7 @@ abstract class Response<TPayload, TError extends Error> {
   protected error: TError | undefined
   protected success: boolean
 
-  constructor(success: boolean, payload?: TPayload, error?: TError) {
+  constructor(success = false, payload?: TPayload, error?: TError) {
     this.payload = payload
     this.error = error
     this.success = success
