@@ -14,7 +14,7 @@ abstract class Response<TPayload, TError extends Error> {
   }
 
   getPayload() {
-    return this.error
+    return this.payload
   }
 
   isSuccessfull() {
