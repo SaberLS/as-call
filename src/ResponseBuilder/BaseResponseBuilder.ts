@@ -1,15 +1,11 @@
-import {
-  Response,
-  type ResponseFailure,
-  type ResponseSuccess,
-} from '../Response/Response'
+import { Response } from '../Response/Response'
 
 abstract class BaseResponseBuilder<
   TPayload,
   TError extends Error,
   TStart,
-  TFailure extends ResponseFailure<TError>,
-  TSuccess extends ResponseSuccess<TPayload>,
+  TFailure extends Response<unknown, TError, false>,
+  TSuccess extends Response<TPayload, undefined, true>,
 > extends Response<TPayload, TError> {
   private _initialized = false
 

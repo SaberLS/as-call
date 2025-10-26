@@ -1,13 +1,13 @@
 import type { Handlers } from './Handlers'
-import type { ResponseFailure, ResponseSuccess } from './Response/Response'
+import { Response } from './Response/Response'
 import type { BaseResponseBuilder } from './ResponseBuilder/BaseResponseBuilder'
 
 // TODO add ability to use diffrent handlers not only ASCallHandlers
 abstract class ASCallBase<
   TPayload,
   TCallParams extends unknown[],
-  TResponseSuccess extends ResponseSuccess<TPayload>,
-  TResponseFailure extends ResponseFailure<TError>,
+  TResponseSuccess extends Response<TPayload, undefined, true>,
+  TResponseFailure extends Response<unknown, TError, false>,
   TStart = void,
   TError extends Error = Error,
   TGetParams extends unknown[] = TCallParams,

@@ -1,4 +1,4 @@
-import { ResponseFailure, ResponseSuccess } from '../Response/Response'
+import { Response } from '../Response/Response'
 import { BaseResponseBuilder } from './BaseResponseBuilder'
 
 class ResponseBuilder<
@@ -7,15 +7,24 @@ class ResponseBuilder<
 > extends BaseResponseBuilder<
   TPayload,
   TError,
-  ResponseFailure<TError>,
-  ResponseSuccess<TPayload>
+  void,
+  Response<unknown, TError, false>,
+  Response<TPayload, undefined, true>
 > {
+  start = () => {
+    return
+  }
+
   fail = () => {
-    return new ResponseFailure<TError>(this.getPayload(), this.getError())
+    return new Response<unknown, TError, false>(
+      false,
+      this.getPayload(),
+      this.getError()
+    )
   }
 
   succed = () => {
-    return new ResponseSuccess<TPayload>(this.getPayload())
+    return new Response<TPayload, undefined, true>(true, this.getPayload())
   }
 }
 
