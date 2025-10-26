@@ -4,32 +4,16 @@ class Handlers<
   TSuccess extends Response<unknown, undefined, true>,
   TFailure extends Response<unknown, unknown, false>,
 > {
-  protected onStart: OnStart<TStart> | undefined
-  protected onSuccess: OnSuccess<TSuccess> | undefined
-  protected onFailure: OnFailure<TFailure> | undefined
-  protected onFinal: OnFinal<TSuccess | TFailure> | undefined
+  onStart: OnStart<TStart> | undefined
+  onSuccess: OnSuccess<TSuccess> | undefined
+  onFailure: OnFailure<TFailure> | undefined
+  onFinal: OnFinal<TSuccess | TFailure> | undefined
 
   constructor(handlers?: Partial<Options<TStart, TSuccess, TFailure>>) {
     this.onStart = handlers?.onStart
     this.onSuccess = handlers?.onSuccess
     this.onFailure = handlers?.onFailure
     this.onFinal = handlers?.onFinal
-  }
-
-  handleStart = (start: TStart) => {
-    this.onStart?.(start)
-  }
-
-  handleSuccess = (response: TSuccess) => {
-    this.onSuccess?.(response)
-  }
-
-  handleFailure = (response: TFailure) => {
-    this.onFailure?.(response)
-  }
-
-  handleFinal = (response: TSuccess | TFailure) => {
-    this.onFinal?.(response)
   }
 }
 
