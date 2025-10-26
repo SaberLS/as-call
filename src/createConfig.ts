@@ -76,7 +76,7 @@ const createConfig = (__dirname: string): Config => {
     },
     {
       ...pluginJest.configs['flat/recommended'],
-      files: ['__tests__/**/*.{test,spec}.{js,ts,jsx,tsx}'],
+      files: ['__tests__/**/*.{js,ts,jsx,tsx}'],
       plugins: { jest: pluginJest },
       languageOptions: {
         ...pluginJest.configs['flat/recommended'].languageOptions,
