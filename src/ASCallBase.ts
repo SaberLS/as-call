@@ -8,23 +8,27 @@ abstract class ASCallBase<
   TCallParams extends unknown[],
   TResponseSuccess extends ResponseSuccess<TPayload>,
   TResponseFailure extends ResponseFailure<TError>,
+  TStart = void,
+  TError extends Error = Error,
+  TGetParams extends unknown[] = TCallParams,
   TResponseBuilder extends BaseResponseBuilder<
     TPayload,
     TError,
     TStart,
     TResponseFailure,
     TResponseSuccess
-  >,
-  TStart,
-  TError extends Error = Error,
-  THandlers extends Handlers<
+  > = BaseResponseBuilder<
     TPayload,
     TError,
     TStart,
+    TResponseFailure,
+    TResponseSuccess
+  >,
+  THandlers extends Handlers<
+    TStart,
     TResponseSuccess,
     TResponseFailure
-  > = Handlers<TPayload, TError, TStart, TResponseSuccess, TResponseFailure>,
-  TGetParams extends unknown[] = TCallParams,
+  > = Handlers<TStart, TResponseSuccess, TResponseFailure>,
 > {
   abstract readonly responseBuilder: TResponseBuilder
   abstract readonly handlers: THandlers
