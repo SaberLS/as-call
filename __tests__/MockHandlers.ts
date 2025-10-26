@@ -6,10 +6,10 @@ class MockHandlers<
   TSuccess extends Response<unknown, undefined, true>,
   TFailure extends Response<unknown, unknown, false>,
 > extends Handlers<TStart, TSuccess, TFailure> {
-  handleStart = jest.fn()
-  handleSuccess = jest.fn()
-  handleFailure = jest.fn()
-  handleFinal = jest.fn()
+  onStart = jest.fn()
+  onSuccess = jest.fn()
+  onFailure = jest.fn()
+  onFinal = jest.fn()
 }
 
 export { MockHandlers }
