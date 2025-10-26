@@ -73,6 +73,7 @@ abstract class ASCallBase<
     ...args: this['getArgs'] extends undefined ? TCallParams : TGetParams
   ) {
     try {
+      this.responseBuilder.reset()
       const parameters = await this.getParameters(...args)
       this.handlers.handleStart(this.responseBuilder.init())
 
@@ -84,17 +85,15 @@ abstract class ASCallBase<
     } catch (error_: unknown) {
       const error: TError = await this.parseError(error_)
       this.responseBuilder.setError(error)
+      this.responseBuilder.setSuccess(false)
 
       this.handlers.handleFailure(this.responseBuilder.fail())
     } finally {
-      this.handlers.handleFinal(
-        this.responseBuilder.isSuccessfull() ?
-          this.responseBuilder.succed()
-        : this.responseBuilder.fail()
-      )
+      this.handlers.handleFinal(this.responseBuilder.build())
     }
 
     const build = this.responseBuilder.build()
+    this.responseBuilder.reset()
     return build
   }
 }
