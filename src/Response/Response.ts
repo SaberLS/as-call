@@ -9,12 +9,24 @@ class Response<TPayload, TError, TSuccess extends boolean = boolean> {
     this.success = success
   }
 
+  setError(error: TError | undefined) {
+    this.error = error
+  }
+
   getError() {
     return this.error
   }
 
+  setPayload(payload: TPayload | undefined) {
+    this.payload = payload
+  }
+
   getPayload() {
     return this.payload
+  }
+
+  setSuccess(success: TSuccess) {
+    this.success = success
   }
 
   isSuccessfull() {
