@@ -64,38 +64,60 @@ abstract class ASCallBase<
     return res
   }
 
-  abstract parseError(error_: unknown): TError | Promise<TError>
+  private choseHandler<T extends ((...args: never[]) => void) | undefined>(
+    prefered?: T,
+    def?: T
+  ) {
+    return prefered ?? def
+  }
 
-  async call(
+  call(...args: this['getArgs'] extends undefined ? TCallParams : TGetParams) {
+    return this.callWithOptions(undefined, ...args)
+  }
+
+  async callWithOptions(
     // TODO: pass custom handlers to individual call
-    // handlers?: Handlers,
+    handlers?: Partial<THandlers>,
     // if getArgs is undefined take arguments of Call
     ...args: this['getArgs'] extends undefined ? TCallParams : TGetParams
   ) {
+    let response: TResponseSuccess | TResponseFailure | undefined
     try {
       this.responseBuilder.reset()
       const parameters = await this.getParameters(...args)
-      this.handlers.handleStart(this.responseBuilder.init())
+
+      const start = this.responseBuilder.init()
+      this.choseHandler(handlers?.onStart, this.handlers.onStart)?.(start)
 
       const payload = await this.makeRequest(...parameters)
       this.responseBuilder.setPayload(payload)
       this.responseBuilder.setSuccess(true)
 
-      this.handlers.handleSuccess(this.responseBuilder.succed())
+      response = this.responseBuilder.succed()
+      this.choseHandler(
+        handlers?.onSuccess,
+        this.handlers.onSuccess
+      )?.(response)
     } catch (error_: unknown) {
       const error: TError = await this.parseError(error_)
       this.responseBuilder.setError(error)
       this.responseBuilder.setSuccess(false)
 
-      this.handlers.handleFailure(this.responseBuilder.fail())
+      response = this.responseBuilder.fail()
+      this.choseHandler(
+        handlers?.onFailure,
+        this.handlers?.onFailure
+      )?.(response)
     } finally {
-      this.handlers.handleFinal(this.responseBuilder.build())
+      if (response !== undefined) {
+        this.choseHandler(handlers?.onFinal, this.handlers?.onFinal)?.(response)
+      }
     }
 
-    const build = this.responseBuilder.build()
-    this.responseBuilder.reset()
-    return build
+    return response
   }
+
+  abstract parseError(error_: unknown): TError | Promise<TError>
 }
 
 type GetArgs<TParams extends unknown[], TCallParams extends unknown[]> =
