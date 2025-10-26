@@ -1,11 +1,9 @@
 import { ResponseFailure, type ResponseSuccess } from './Response/Response'
 
 class Handlers<
-  TPayload,
-  TError extends Error,
   TStart,
-  TSuccess extends ResponseSuccess<TPayload>,
-  TFailure extends ResponseFailure<TError>,
+  TSuccess extends ResponseSuccess<unknown>,
+  TFailure extends ResponseFailure<Error>,
 > {
   protected onStart: OnStart<TStart> | undefined
   protected onSuccess: OnSuccess<TSuccess> | undefined
