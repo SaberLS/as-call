@@ -12,9 +12,9 @@ abstract class BaseResponseBuilder<
   reset() {
     this._initialized = false
 
-    this.setError(undefined)
-    this.setPayload(undefined)
-    this.setSuccess(false)
+    super.setError(undefined)
+    super.setPayload(undefined)
+    super.setSuccess(false)
   }
 
   init() {
@@ -38,17 +38,17 @@ abstract class BaseResponseBuilder<
 
   setPayload(payload: TPayload | undefined) {
     this.initGuard()
-    this.payload = payload
+    super.setPayload(payload)
   }
 
   setError(error: TError | undefined) {
     this.initGuard()
-    this.error = error
+    super.setError(error)
   }
 
   setSuccess(success: boolean) {
     this.initGuard()
-    this.success = success
+    super.setSuccess(success)
   }
 
   initGuard() {
