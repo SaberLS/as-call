@@ -1,54 +1,62 @@
 import type { Handlers } from './Handlers'
 import { Response } from './Response/Response'
-import type { BaseResponseBuilder } from './ResponseBuilder/BaseResponseBuilder'
 
-// TODO add ability to use diffrent handlers not only ASCallHandlers
 abstract class ASCallBase<
   TPayload,
+  TError extends Error,
   TCallParams extends unknown[],
-  TResponseSuccess extends Response<TPayload, undefined, true>,
-  TResponseFailure extends Response<unknown, TError, false>,
-  TStart = void,
-  TError extends Error = Error,
   TGetParams extends unknown[] = TCallParams,
-  TResponseBuilder extends BaseResponseBuilder<
+  TResponse extends Response<undefined, undefined, boolean> = Response<
+    undefined,
+    undefined,
+    boolean
+  >,
+  TResponseSuccess extends Response<TPayload, undefined, true> = Response<
     TPayload,
+    undefined,
+    true
+  >,
+  TResponseFailure extends Response<unknown, TError, false> = Response<
+    unknown,
     TError,
-    TStart,
-    TResponseFailure,
-    TResponseSuccess
-  > = BaseResponseBuilder<
-    TPayload,
-    TError,
-    TStart,
-    TResponseFailure,
-    TResponseSuccess
+    false
   >,
   THandlers extends Handlers<
-    TStart,
+    [response: TResponse],
     TResponseSuccess,
     TResponseFailure
-  > = Handlers<TStart, TResponseSuccess, TResponseFailure>,
+  > = Handlers<[response: TResponse], TResponseSuccess, TResponseFailure>,
 > {
-  abstract readonly responseBuilder: TResponseBuilder
-  abstract readonly handlers: THandlers
-
   readonly request: Reguest<TCallParams, TPayload>
+  readonly handlers: Partial<THandlers> | undefined
   readonly getArgs?: GetArgs<TGetParams, TCallParams> | undefined
 
   readonly name: string
 
   constructor(
     request: Reguest<TCallParams, TPayload>,
-    options?: Partial<Options<TCallParams, TGetParams>>
+    options?: Partial<
+      Options<TCallParams, TGetParams> & { handlers: Partial<THandlers> }
+    >
   ) {
     this.request = request
     this.name = options?.name ?? request.name
 
+    this.handlers = options?.handlers
     this.getArgs = options?.getArgs
   }
 
-  private async getParameters(
+  protected async tryStatement(
+    response: TResponse,
+    ...args: this['getArgs'] extends undefined ? TCallParams : TGetParams
+  ) {
+    const parameters = await this.parseArguments(...args)
+    const payload = await this.makeRequest(...parameters)
+
+    return this.succed(response, payload)
+  }
+
+  protected async parseArguments(
     ...args: TCallParams | TGetParams
   ): Promise<TCallParams> {
     const parameters =
@@ -60,15 +68,22 @@ abstract class ASCallBase<
   }
 
   async makeRequest(...parameters: TCallParams) {
-    const res: TPayload = await this.request(...parameters)
-    return res
+    const payload = await this.request(...parameters)
+    return payload
   }
 
-  private choseHandler<T extends ((...args: never[]) => void) | undefined>(
-    prefered?: T,
-    def?: T
+  async catchStatement(
+    instance: TResponse | TResponseSuccess,
+    error_: unknown
   ) {
-    return prefered ?? def
+    const error = await this.parseError(error_)
+
+    return this.fail(instance, error)
+  }
+  abstract parseError(error_: unknown): TError | Promise<TError>
+
+  finalStatement(response: TResponseFailure | TResponseSuccess) {
+    return response
   }
 
   call(...args: this['getArgs'] extends undefined ? TCallParams : TGetParams) {
@@ -76,48 +91,54 @@ abstract class ASCallBase<
   }
 
   async callWithOptions(
-    // TODO: pass custom handlers to individual call
     handlers?: Partial<THandlers>,
     // if getArgs is undefined take arguments of Call
     ...args: this['getArgs'] extends undefined ? TCallParams : TGetParams
   ) {
-    let response: TResponseSuccess | TResponseFailure | undefined
+    const mergedHandlers = { ...this.handlers, ...handlers }
+    let response: TResponse | TResponseFailure | TResponseSuccess = this.init()
+    mergedHandlers.onStart?.(response)
+
     try {
-      this.responseBuilder.reset()
-      const parameters = await this.getParameters(...args)
-
-      const start = this.responseBuilder.init()
-      this.choseHandler(handlers?.onStart, this.handlers.onStart)?.(start)
-
-      const payload = await this.makeRequest(...parameters)
-      this.responseBuilder.setPayload(payload)
-      this.responseBuilder.setSuccess(true)
-
-      response = this.responseBuilder.succed()
-      this.choseHandler(
-        handlers?.onSuccess,
-        this.handlers.onSuccess
-      )?.(response)
+      response = await this.tryStatement?.(response, ...args)
+      mergedHandlers.onSuccess?.(response)
     } catch (error_: unknown) {
-      const error: TError = await this.parseError(error_)
-      this.responseBuilder.setError(error)
-      this.responseBuilder.setSuccess(false)
-
-      response = this.responseBuilder.fail()
-      this.choseHandler(
-        handlers?.onFailure,
-        this.handlers?.onFailure
-      )?.(response)
+      response = await this.catchStatement(response, error_)
+      mergedHandlers.onFailure?.(response)
     } finally {
-      if (response !== undefined) {
-        this.choseHandler(handlers?.onFinal, this.handlers?.onFinal)?.(response)
-      }
+      mergedHandlers.onFinal?.(
+        this.finalStatement(response as TResponseFailure | TResponseSuccess)
+      )
     }
 
     return response
   }
+  abstract init(): TResponse
+  abstract succed<T extends Response<unknown, unknown, boolean>>(
+    instance: T,
+    payload: TPayload
+  ): TResponseSuccess
+  // {
+  // example implementation
+  //   const newInstance = new Response<TPayload, undefined, true>(true, payload)
 
-  abstract parseError(error_: unknown): TError | Promise<TError>
+  //   return newInstance
+  // }
+
+  abstract fail<T extends TResponse | TResponseSuccess>(
+    instance: T,
+    error: TError
+  ): TResponseFailure
+  // example implementation for Response
+  // {
+  //   const newInstance = new Response<unknown, TError, false>(
+  //     false,
+  //     instance.getPayload(),
+  //     error
+  //   )
+
+  //   return newInstance
+  // }
 }
 
 type GetArgs<TParams extends unknown[], TCallParams extends unknown[]> =

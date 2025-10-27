@@ -1,32 +1,20 @@
 class Response<TPayload, TError, TSuccess extends boolean = boolean> {
-  protected payload: TPayload | undefined
-  protected error: TError | undefined
-  protected success: TSuccess
+  private readonly payload: TPayload
+  private readonly error: TError
+  private readonly success: TSuccess
 
-  constructor(success: TSuccess, payload?: TPayload, error?: TError) {
+  constructor(success: TSuccess, payload: TPayload, error: TError) {
     this.payload = payload
     this.error = error
     this.success = success
-  }
-
-  setError(error: TError | undefined) {
-    this.error = error
   }
 
   getError() {
     return this.error
   }
 
-  setPayload(payload: TPayload | undefined) {
-    this.payload = payload
-  }
-
   getPayload() {
     return this.payload
-  }
-
-  setSuccess(success: TSuccess) {
-    this.success = success
   }
 
   isSuccessfull() {
