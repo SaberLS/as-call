@@ -1,57 +1,83 @@
-import { ASCallBase, type Options, type Reguest } from '../src/ASCallBase'
+/* eslint-disable unicorn/consistent-function-scoping */ // arrow functions need to be in jest.fn scope otherwise they lose this
+import { ASCallBase } from '../src/ASCallBase'
+import type { Handlers } from '../src/Handlers'
 import { Response } from '../src/Response/Response'
-import { MockHandlers } from './MockHandlers'
-import { MockResponseBuilder } from './MockResponseBuilder'
 
 // Concrete test subclass
+class TestASCallBase<
+  TPayload,
+  TCallParams extends unknown[],
+  TGetParams extends unknown[] = TCallParams,
+> extends ASCallBase<TPayload, Error, TCallParams, TGetParams> {
+  parseError(error_: unknown): Error | Promise<Error> {
+    if (error_ instanceof Error) return error_
+
+    return typeof error_ === 'string' ?
+        new Error(error_)
+      : new Error('Unknown error cause', { cause: error_ })
+  }
+
+  init(): Response<undefined, undefined, boolean> {
+    return new Response(false, undefined, undefined)
+  }
+
+  succed<T extends Response<unknown, unknown, boolean>>(
+    instance: T,
+    payload: TPayload
+  ): Response<TPayload, undefined, true> {
+    return new Response(true, payload, undefined)
+  }
+
+  fail<T extends Response<unknown, unknown, boolean>>(
+    instance: T,
+    error: Error
+  ): Response<unknown, Error, false> {
+    return new Response(false, instance.getPayload(), error)
+  }
+}
+
 class TestASCall<
   TPayload,
   TCallParams extends unknown[],
   TGetParams extends unknown[] = TCallParams,
-> extends ASCallBase<
-  TPayload,
-  TCallParams,
-  Response<TPayload, undefined, true>,
-  Response<unknown, Error, false>,
-  void,
-  Error,
-  TGetParams
-> {
-  readonly responseBuilder: MockResponseBuilder<
-    TPayload,
-    Error,
-    undefined,
-    Response<unknown, Error, false>,
-    Response<TPayload, undefined, true>
-  >
-  readonly handlers: MockHandlers<
-    void,
-    Response<TPayload, undefined, true>,
-    Response<unknown, Error, false>
-  >
+> extends TestASCallBase<TPayload, TCallParams, TGetParams> {
+  fail = jest.fn(
+    <T extends Response<unknown, unknown, boolean>>(
+      instance: T,
+      error: Error
+    ): Response<unknown, Error, false> => super.fail(instance, error)
+  )
+  succed = jest.fn(
+    <T extends Response<unknown, unknown, boolean>>(
+      instance: T,
+      payload: TPayload
+    ): Response<TPayload, undefined, true> => super.succed(instance, payload)
+  )
 
-  constructor(
-    request: Reguest<TCallParams, TPayload>,
-    options?: Partial<
-      Options<TCallParams, TGetParams> & {
-        handlers: ConstructorParameters<
-          typeof MockHandlers<
-            void,
-            Response<TPayload, undefined, true>,
-            Response<unknown, Error, false>
-          >
-        >['0']
-      }
-    >
-  ) {
-    super(request, { name: options?.name, getArgs: options?.getArgs })
-    this.responseBuilder = new MockResponseBuilder(false)
-    this.handlers = new MockHandlers(options?.handlers)
-  }
+  init = jest.fn((): Response<undefined, undefined, boolean> => super.init())
 
-  parseError(error_: unknown): Error {
-    return error_ instanceof Error ? error_ : new Error(String(error_))
-  }
+  call = jest.fn(
+    (
+      ...args: this['getArgs'] extends undefined ? TCallParams : TGetParams
+    ): Promise<
+      Response<unknown, Error, false> | Response<TPayload, undefined, true>
+    > => super.call(...args)
+  )
+
+  callWithOptions = jest.fn(
+    (
+      handlers?: Partial<
+        Handlers<
+          [response: Response<undefined, undefined, boolean>],
+          Response<TPayload, undefined, true>,
+          Response<unknown, Error, false>
+        >
+      >,
+      ...args: this['getArgs'] extends undefined ? TCallParams : TGetParams
+    ): Promise<
+      Response<unknown, Error, false> | Response<TPayload, undefined, true>
+    > => super.callWithOptions(handlers, ...args)
+  )
 }
 
-export { TestASCall }
+export { TestASCall, TestASCallBase }

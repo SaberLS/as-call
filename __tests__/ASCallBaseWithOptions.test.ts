@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/require-await */ //async is used to return promises
+import { MockHandlers } from './MockHandlers'
 import { TestASCall } from './TestASCall'
 
 describe('ASCallBase.callWithOptions', () => {
@@ -7,44 +8,42 @@ describe('ASCallBase.callWithOptions', () => {
   })
 
   it('uses default handlers when no overrides are passed', async () => {
-    const requestMock = jest.fn(async (a: number, b: number) => `sum:${a + b}`)
-    const instance = new TestASCall(requestMock)
+    const requestMock = jest.fn(async (a: number, b: number) => {
+      return `sum:${a + b}`
+    })
 
-    const response = await instance.callWithOptions(undefined, 1, 2)
+    const defaultHandlers = new MockHandlers()
+    const instance = new TestASCall(requestMock, { handlers: defaultHandlers })
+
+    await instance.call(1, 2)
 
     // Default handler invocations
-    expect(instance.handlers.onStart).toHaveBeenCalledWith('start')
-    expect(instance.handlers.onSuccess).toHaveBeenCalledWith('succed')
-    expect(instance.handlers.onFinal).toHaveBeenCalledWith('succed')
+    expect(defaultHandlers.onStart).toHaveBeenCalled()
+    expect(defaultHandlers.onSuccess).toHaveBeenCalled()
+    expect(defaultHandlers.onFinal).toHaveBeenCalled()
 
     // Verify that overrides were NOT called (none passed)
     expect(requestMock).toHaveBeenCalledWith(1, 2)
-    expect(response).toBe('succed')
   })
 
   it('prefers custom handlers over default ones', async () => {
     const requestMock = jest.fn(async (x: string) => `hi:${x}`)
-    const instance = new TestASCall(requestMock)
+    const defaultHandlers = new MockHandlers()
+    const customHandlers = new MockHandlers()
 
-    const custom = {
-      onStart: jest.fn(),
-      onSuccess: jest.fn(),
-      onFinal: jest.fn(),
-    }
+    const instance = new TestASCall(requestMock, { handlers: defaultHandlers })
 
-    const response = await instance.callWithOptions(custom, 'A')
+    await instance.callWithOptions(customHandlers, 'A')
 
     // Verify custom handlers used
-    expect(custom.onStart).toHaveBeenCalledWith('start')
-    expect(custom.onSuccess).toHaveBeenCalledWith('succed')
-    expect(custom.onFinal).toHaveBeenCalledWith('succed')
+    expect(customHandlers.onStart).toHaveBeenCalled()
+    expect(customHandlers.onSuccess).toHaveBeenCalled()
+    expect(customHandlers.onFinal).toHaveBeenCalled()
 
     // Verify defaults not called
-    expect(instance.handlers.onStart).not.toHaveBeenCalled()
-    expect(instance.handlers.onSuccess).not.toHaveBeenCalled()
-    expect(instance.handlers.onFinal).not.toHaveBeenCalled()
-
-    expect(response).toBe('succed')
+    expect(defaultHandlers.onStart).not.toHaveBeenCalled()
+    expect(defaultHandlers.onSuccess).not.toHaveBeenCalled()
+    expect(defaultHandlers.onFinal).not.toHaveBeenCalled()
   })
 
   it('invokes custom onFailure/onFinal in error case', async () => {
@@ -52,31 +51,30 @@ describe('ASCallBase.callWithOptions', () => {
     const requestMock = jest.fn(async () => {
       throw error
     })
-    const instance = new TestASCall(requestMock)
-    instance.responseBuilder.isSuccessfull.mockReturnValue(false)
+    const defaultHandlers = new MockHandlers()
+    const instance = new TestASCall(requestMock, { handlers: defaultHandlers })
 
-    const custom = {
+    const customHandlers = {
       onFailure: jest.fn(),
       onFinal: jest.fn(),
     }
 
     // @ts-expect-error Expected 0-1 arguments, but got 3.ts(2554) passing wrong amount of arguments is part of the test
-    const response = await instance.callWithOptions(custom, 1, 2)
+    await instance.callWithOptions(customHandlers, 1, 2)
 
     // Custom failure handler
-    expect(custom.onFailure).toHaveBeenCalledWith('fail')
-    expect(custom.onFinal).toHaveBeenCalledWith('fail')
+    expect(customHandlers.onFailure).toHaveBeenCalled()
+    expect(customHandlers.onFinal).toHaveBeenCalled()
 
     // Default handlers unused
-    expect(instance.handlers.onFailure).not.toHaveBeenCalled()
-    expect(instance.handlers.onFinal).not.toHaveBeenCalled()
-
-    expect(response).toBe('fail')
+    expect(defaultHandlers.onFailure).not.toHaveBeenCalled()
+    expect(defaultHandlers.onFinal).not.toHaveBeenCalled()
   })
 
-  it('falls back to class-level handlers when custom ones missing', async () => {
+  it('falls back to default handlers when custom ones missing', async () => {
     const requestMock = jest.fn(async (a: number, b: number) => `sum:${a + b}`)
-    const instance = new TestASCall(requestMock)
+    const defaultHandlers = new MockHandlers()
+    const instance = new TestASCall(requestMock, { handlers: defaultHandlers })
 
     const partial = {
       onStart: jest.fn(),
@@ -86,10 +84,10 @@ describe('ASCallBase.callWithOptions', () => {
     await instance.callWithOptions(partial, 2, 3)
 
     // custom onStart called
-    expect(partial.onStart).toHaveBeenCalledWith('start')
+    expect(partial.onStart).toHaveBeenCalled()
 
     // default handlers used for missing ones
-    expect(instance.handlers.onSuccess).toHaveBeenCalledWith('succed')
-    expect(instance.handlers.onFinal).toHaveBeenCalledWith('succed')
+    expect(defaultHandlers.onSuccess).toHaveBeenCalled()
+    expect(defaultHandlers.onFinal).toHaveBeenCalled()
   })
 })

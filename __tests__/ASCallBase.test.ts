@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/require-await */ //async is used to return promises
+/* eslint-disable @typescript-eslint/require-await */ // async is used to return promises
+import { MockHandlers } from './MockHandlers'
 import { TestASCall } from './TestASCall'
 
 describe('ASCallBase', () => {
@@ -6,9 +7,10 @@ describe('ASCallBase', () => {
     jest.clearAllMocks()
   })
 
-  it('should call handlers and responseBuilder correctly on success', async () => {
+  it('should call handlers correctly on success', async () => {
     const requestMock = jest.fn(async (a: number, b: number) => `sum:${a + b}`)
-    const instance = new TestASCall(requestMock)
+    const defaultHandlers = new MockHandlers()
+    const instance = new TestASCall(requestMock, { handlers: defaultHandlers })
 
     const result = await instance.call(2, 3)
     console.log(result)
@@ -17,15 +19,13 @@ describe('ASCallBase', () => {
     expect(requestMock).toHaveBeenCalledWith(2, 3)
 
     // handler lifecycle
-    expect(instance.handlers.onStart).toHaveBeenCalledWith('start')
-    expect(instance.handlers.onSuccess).toHaveBeenCalledWith('succed')
-    expect(instance.handlers.onFinal).toHaveBeenCalledWith('succed')
+    expect(defaultHandlers.onStart).toHaveBeenCalled()
+    expect(defaultHandlers.onSuccess).toHaveBeenCalled()
+    expect(defaultHandlers.onFinal).toHaveBeenCalled()
 
-    // responseBuilder calls
-    expect(instance.responseBuilder.setPayload).toHaveBeenCalledWith('sum:5')
-    expect(instance.responseBuilder.setSuccess).toHaveBeenCalledWith(true)
+    expect(defaultHandlers.onFailure).not.toHaveBeenCalled()
 
-    expect(result).toBe('succed')
+    expect(result.isSuccessfull()).toBe(true)
   })
 
   it('should handle error and call failure handlers', async () => {
@@ -33,22 +33,21 @@ describe('ASCallBase', () => {
     const requestMock = jest.fn(async () => {
       throw error
     })
-    const instance = new TestASCall(requestMock)
 
-    // Pretend isSuccessfull returns false after error
-    instance.responseBuilder.isSuccessfull.mockReturnValue(false)
+    const defaultHandlers = new MockHandlers()
+    const instance = new TestASCall(requestMock, { handlers: defaultHandlers })
 
     const result = await instance.call()
+    expect(instance.call).toHaveBeenCalled()
 
-    expect(instance.responseBuilder.setError).toHaveBeenCalledWith(error)
-    expect(instance.handlers.onFailure).toHaveBeenCalledWith('fail')
-    expect(instance.handlers.onFinal).toHaveBeenCalledWith('fail')
-    expect(result).toBe('fail')
+    expect(defaultHandlers.onFailure).toHaveBeenCalled()
+    expect(defaultHandlers.onFinal).toHaveBeenCalled()
+
+    expect(result.isSuccessfull()).toBe(false)
   })
 
   it('should use getArgs if provided', async () => {
     const getArgsMock = jest.fn(async (x: string) => [Number(x), 10])
-
     const requestMock = jest.fn(async (a: number, b: number) => `sum:${a + b}`)
 
     // @ts-expect-error using mock adds wraps function with Mock<> function works correctly it's just a typing issue
@@ -57,6 +56,6 @@ describe('ASCallBase', () => {
 
     expect(getArgsMock).toHaveBeenCalledWith('5')
     expect(requestMock).toHaveBeenCalledWith(5, 10)
-    expect(result).toBe('succed')
+    expect(result.isSuccessfull()).toBe(true)
   })
 })
