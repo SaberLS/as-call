@@ -203,4 +203,4 @@ interface Options<TCallParams extends unknown[], TGetParams extends unknown[]> {
 }
 
 export { ASCallBase }
-export type { GetArgs, Options, Request }
+export type { ConditionalParams, ExtraWithCall, GetArgs, Options, Request }
