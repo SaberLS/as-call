@@ -5,7 +5,8 @@ abstract class ASCallBase<
   TPayload,
   TError extends Error,
   TCallParams extends unknown[],
-  TGetParams extends unknown[] = TCallParams,
+  TExtraParams extends unknown[] = [],
+  TGetParams extends unknown[] = ExtraWithCall<TExtraParams, TCallParams>,
   TResponse extends Response<undefined, undefined, boolean> = Response<
     undefined,
     undefined,
@@ -27,16 +28,20 @@ abstract class ASCallBase<
     TResponseFailure
   > = Handlers<[response: TResponse], TResponseSuccess, TResponseFailure>,
 > {
-  readonly request: Reguest<TCallParams, TPayload>
+  readonly request: Request<TCallParams, TPayload>
   readonly handlers: Partial<THandlers> | undefined
-  readonly getArgs?: GetArgs<TGetParams, TCallParams> | undefined
+  readonly getArgs?:
+    | GetArgs<TGetParams, ExtraWithCall<TExtraParams, TCallParams>>
+    | undefined
 
   readonly name: string
 
   constructor(
-    request: Reguest<TCallParams, TPayload>,
+    request: Request<TCallParams, TPayload>,
     options?: Partial<
-      Options<TCallParams, TGetParams> & { handlers: Partial<THandlers> }
+      Options<ExtraWithCall<TExtraParams, TCallParams>, TGetParams> & {
+        handlers: Partial<THandlers>
+      }
     >
   ) {
     this.request = request
@@ -48,7 +53,9 @@ abstract class ASCallBase<
 
   protected async tryStatement(
     response: TResponse,
-    ...args: this['getArgs'] extends undefined ? TCallParams : TGetParams
+    ...args: this['getArgs'] extends undefined ?
+      ExtraWithCall<TExtraParams, TCallParams>
+    : TGetParams
   ) {
     const parameters = await this.parseArguments(...args)
     const payload = await this.makeRequest(...parameters)
@@ -56,21 +63,33 @@ abstract class ASCallBase<
     return this.succed(response, payload)
   }
 
+  // Allows for full typesafety without passing parseArguments at instance declaration level
   protected async parseArguments(
-    ...args: TCallParams | TGetParams
-  ): Promise<TCallParams> {
+    ...args: ConditionalParams<
+      this['getArgs'],
+      TExtraParams,
+      TCallParams,
+      TGetParams
+    >
+  ): Promise<ExtraWithCall<TExtraParams, TCallParams>> {
+    // These casts are safe because the ternary condition mirrors the same conditional type logic used in the type of ...args.
+    // - If getArgs is undefined, args already match ConditionalParams<TExtraParams, TCallParams>
+    // - Otherwise, getArgs(...args) produces that same shape.
     const parameters =
       this.getArgs === undefined ?
-        (args as TCallParams)
+        (args as ExtraWithCall<TExtraParams, TCallParams>)
       : await this.getArgs(...(args as TGetParams))
 
     return parameters
   }
 
-  async makeRequest(...parameters: TCallParams) {
-    const payload = await this.request(...parameters)
-    return payload
-  }
+  abstract makeRequest(
+    ...parameters: ExtraWithCall<TExtraParams, TCallParams>
+  ): Promise<TPayload>
+  // {
+  //   const payload = await this.request(...parameters)
+  //   return payload
+  // }
 
   async catchStatement(
     instance: TResponse | TResponseSuccess,
@@ -86,14 +105,25 @@ abstract class ASCallBase<
     return response
   }
 
-  call(...args: this['getArgs'] extends undefined ? TCallParams : TGetParams) {
+  call(
+    ...args: ConditionalParams<
+      this['getArgs'],
+      TExtraParams,
+      TCallParams,
+      TGetParams
+    >
+  ) {
     return this.callWithOptions(undefined, ...args)
   }
 
   async callWithOptions(
     handlers?: Partial<THandlers>,
-    // if getArgs is undefined take arguments of Call
-    ...args: this['getArgs'] extends undefined ? TCallParams : TGetParams
+    ...args: ConditionalParams<
+      this['getArgs'],
+      TExtraParams,
+      TCallParams,
+      TGetParams
+    >
   ) {
     const mergedHandlers = { ...this.handlers, ...handlers }
     let response: TResponse | TResponseFailure | TResponseSuccess = this.init()
@@ -141,11 +171,29 @@ abstract class ASCallBase<
   // }
 }
 
+type ConditionalParams<
+  TGetArgs,
+  TExtraParams extends unknown[],
+  TCallParams extends unknown[],
+  TGetParams extends unknown[],
+> =
+  TGetArgs extends undefined ? ExtraWithCall<TExtraParams, TCallParams>
+  : TGetParams
+
+/**
+ * if TExtraParams are [] use TCallParams type
+ * else [...TExtraParams, ...TCallParams]
+ */
+type ExtraWithCall<
+  TExtraParams extends unknown[],
+  TCallParams extends unknown[],
+> = TExtraParams extends [] ? TCallParams : [...TExtraParams, ...TCallParams]
+
 type GetArgs<TParams extends unknown[], TCallParams extends unknown[]> =
   | ((...args: TParams) => TCallParams)
   | ((...args: TParams) => Promise<TCallParams>)
 
-type Reguest<TCallParams extends unknown[], TPayload> = (
+type Request<TCallParams extends unknown[], TPayload> = (
   ...args: TCallParams
 ) => Promise<TPayload>
 
@@ -155,4 +203,4 @@ interface Options<TCallParams extends unknown[], TGetParams extends unknown[]> {
 }
 
 export { ASCallBase }
-export type { GetArgs, Options, Reguest }
+export type { GetArgs, Options, Request }
