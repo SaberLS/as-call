@@ -5,46 +5,61 @@ abstract class ASCallBase<
   TPayload,
   TError extends Error,
   TCallParams extends unknown[],
+  TResponse extends Response<undefined, undefined, boolean>,
+  TResponseSuccess extends Response<TPayload, undefined, true>,
+  TResponseFailure extends Response<unknown, TError, false>,
   TExtraParams extends unknown[] = [],
   TGetParams extends unknown[] = ExtraWithCall<TExtraParams, TCallParams>,
-  TResponse extends Response<undefined, undefined, boolean> = Response<
-    undefined,
-    undefined,
-    boolean
-  >,
-  TResponseSuccess extends Response<TPayload, undefined, true> = Response<
-    TPayload,
-    undefined,
-    true
-  >,
-  TResponseFailure extends Response<unknown, TError, false> = Response<
-    unknown,
-    TError,
-    false
-  >,
   THandlers extends Handlers<
     [response: TResponse],
     TResponseSuccess,
     TResponseFailure
   > = Handlers<[response: TResponse], TResponseSuccess, TResponseFailure>,
+  TResponseManager extends ResponseManger<
+    TPayload,
+    TError,
+    TResponse,
+    TResponseSuccess,
+    TResponseFailure
+  > = ResponseManger<
+    TPayload,
+    TError,
+    TResponse,
+    TResponseSuccess,
+    TResponseFailure
+  >,
 > {
+  readonly name: string
   readonly request: Request<TCallParams, TPayload>
   readonly handlers: Partial<THandlers> | undefined
   readonly getArgs?:
     | GetArgs<TGetParams, ExtraWithCall<TExtraParams, TCallParams>>
     | undefined
 
-  readonly name: string
+  readonly responseManager: ResponseManger<
+    TPayload,
+    TError,
+    TResponse,
+    TResponseSuccess,
+    TResponseFailure
+  >
 
   constructor(
     request: Request<TCallParams, TPayload>,
-    options?: Partial<
-      Options<ExtraWithCall<TExtraParams, TCallParams>, TGetParams> & {
-        handlers: Partial<THandlers>
-      }
+    options: Options<
+      TPayload,
+      TError,
+      ExtraWithCall<TExtraParams, TCallParams>,
+      TGetParams,
+      TResponse,
+      TResponseSuccess,
+      TResponseFailure,
+      THandlers,
+      TResponseManager
     >
   ) {
     this.request = request
+    this.responseManager = options.responseManager
     this.name = options?.name ?? request.name
 
     this.handlers = options?.handlers
@@ -60,7 +75,7 @@ abstract class ASCallBase<
     const parameters = await this.parseArguments(...args)
     const payload = await this.makeRequest(...parameters)
 
-    return this.succed(response, payload)
+    return this.responseManager.succed(response, payload)
   }
 
   // Allows for full typesafety without passing parseArguments at instance declaration level
@@ -97,7 +112,7 @@ abstract class ASCallBase<
   ) {
     const error = await this.parseError(error_)
 
-    return this.fail(instance, error)
+    return this.responseManager.fail(instance, error)
   }
   abstract parseError(error_: unknown): TError | Promise<TError>
 
@@ -126,7 +141,8 @@ abstract class ASCallBase<
     >
   ) {
     const mergedHandlers = { ...this.handlers, ...handlers }
-    let response: TResponse | TResponseFailure | TResponseSuccess = this.init()
+    let response: TResponse | TResponseFailure | TResponseSuccess =
+      this.responseManager.init()
     mergedHandlers.onStart?.(response)
 
     try {
@@ -143,32 +159,6 @@ abstract class ASCallBase<
 
     return response
   }
-  abstract init(): TResponse
-  abstract succed<T extends Response<unknown, unknown, boolean>>(
-    instance: T,
-    payload: TPayload
-  ): TResponseSuccess
-  // {
-  // example implementation
-  //   const newInstance = new Response<TPayload, undefined, true>(true, payload)
-
-  //   return newInstance
-  // }
-
-  abstract fail<T extends TResponse | TResponseSuccess>(
-    instance: T,
-    error: TError
-  ): TResponseFailure
-  // example implementation for Response
-  // {
-  //   const newInstance = new Response<unknown, TError, false>(
-  //     false,
-  //     instance.getPayload(),
-  //     error
-  //   )
-
-  //   return newInstance
-  // }
 }
 
 type ConditionalParams<
@@ -197,10 +187,58 @@ type Request<TCallParams extends unknown[], TPayload> = (
   ...args: TCallParams
 ) => Promise<TPayload>
 
-interface Options<TCallParams extends unknown[], TGetParams extends unknown[]> {
-  name: string
-  getArgs: GetArgs<TGetParams, TCallParams>
+interface Options<
+  TPayload,
+  TError,
+  TCallParams extends unknown[],
+  TGetParams extends unknown[],
+  TResponse extends Response<undefined, undefined, boolean>,
+  TResponseSuccess extends Response<TPayload, undefined, true>,
+  TResponseFailure extends Response<unknown, TError, false>,
+  THandlers extends Handlers<
+    [response: TResponse],
+    TResponseSuccess,
+    TResponseFailure
+  >,
+  TResponseManager extends ResponseManger<
+    TPayload,
+    TError,
+    TResponse,
+    TResponseSuccess,
+    TResponseFailure
+  >,
+> {
+  name?: string
+  getArgs?: GetArgs<TGetParams, TCallParams>
+  handlers?: Partial<THandlers>
+  responseManager: TResponseManager
+}
+
+interface ResponseManger<
+  TPayload,
+  TError,
+  TResponse extends Response<undefined, undefined, boolean>,
+  TResponseSuccess extends Response<TPayload, undefined, true>,
+  TResponseFailure extends Response<unknown, TError, false>,
+> {
+  init(): TResponse
+  succed<T extends Response<unknown, unknown, boolean>>(
+    instance: T,
+    payload: TPayload
+  ): TResponseSuccess
+
+  fail<T extends TResponse | TResponseSuccess>(
+    instance: T,
+    error: TError
+  ): TResponseFailure
 }
 
 export { ASCallBase }
-export type { ConditionalParams, ExtraWithCall, GetArgs, Options, Request }
+export type {
+  ConditionalParams,
+  ExtraWithCall,
+  GetArgs,
+  Options,
+  Request,
+  ResponseManger,
+}
