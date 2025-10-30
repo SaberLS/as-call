@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable unicorn/consistent-function-scoping */
 import { ASCall } from '../src/ASCall'
+import type { ResponseManger } from '../src/ASCallTypes'
+import { Response } from '../src/Response/Response'
 
 describe('Primitive cases', () => {
   it('should return promise payload in ResponseSuccess', async () => {
@@ -8,7 +10,33 @@ describe('Primitive cases', () => {
       return 1
     }
 
-    const asc = new ASCall(t)
+    const responseManager: ResponseManger<
+      number,
+      Error,
+      Response<undefined, undefined, boolean>,
+      Response<number, undefined, true>,
+      Response<unknown, Error, false>
+    > = {
+      init(): Response<undefined, undefined, boolean> {
+        return new Response(false, undefined, undefined)
+      },
+
+      succed(instance, payload) {
+        return new Response(true, payload, undefined)
+      },
+
+      fail(instance, error) {
+        return new Response(false, instance.getPayload(), error)
+      },
+    }
+
+    const parseError = (error_: unknown): Error => {
+      if (error_ instanceof Error) return error_
+
+      return new Error('Unknown Error', { cause: error_ })
+    }
+
+    const asc = new ASCall(t, { responseManager, parseError })
 
     const res = await asc.call()
 
@@ -23,7 +51,33 @@ describe('Primitive cases', () => {
       throw error
     }
 
-    const asc = new ASCall(t)
+    const responseManager: ResponseManger<
+      number,
+      Error,
+      Response<undefined, undefined, boolean>,
+      Response<number, undefined, true>,
+      Response<unknown, Error, false>
+    > = {
+      init(): Response<undefined, undefined, boolean> {
+        return new Response(false, undefined, undefined)
+      },
+
+      succed(instance, payload) {
+        return new Response(true, payload, undefined)
+      },
+
+      fail(instance, error) {
+        return new Response(false, instance.getPayload(), error)
+      },
+    }
+
+    const parseError = (error_: unknown): Error => {
+      if (error_ instanceof Error) return error_
+
+      return new Error('Unknown Error', { cause: error_ })
+    }
+
+    const asc = new ASCall(t, { responseManager, parseError })
 
     const res = await asc.call()
 
