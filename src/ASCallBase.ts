@@ -32,6 +32,7 @@ abstract class ASCallBase<
   readonly name: string
   readonly request: Request<TCallParams, TPayload>
   readonly handlers: Partial<THandlers> | undefined
+  readonly parseError: (error_: unknown) => TError | Promise<TError>
   readonly getArgs?:
     | GetArgs<TGetParams, ExtraWithCall<TExtraParams, TCallParams>>
     | undefined
@@ -60,8 +61,9 @@ abstract class ASCallBase<
   ) {
     this.request = request
     this.responseManager = options.responseManager
-    this.name = options?.name ?? request.name
+    this.parseError = options.parseError
 
+    this.name = options?.name ?? request.name
     this.handlers = options?.handlers
     this.getArgs = options?.getArgs
   }
@@ -114,7 +116,6 @@ abstract class ASCallBase<
 
     return this.responseManager.fail(instance, error)
   }
-  abstract parseError(error_: unknown): TError | Promise<TError>
 
   finalStatement(response: TResponseFailure | TResponseSuccess) {
     return response
@@ -212,6 +213,7 @@ interface Options<
   getArgs?: GetArgs<TGetParams, TCallParams>
   handlers?: Partial<THandlers>
   responseManager: TResponseManager
+  parseError: (error_: unknown) => TError | Promise<TError>
 }
 
 interface ResponseManger<
