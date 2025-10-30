@@ -1,4 +1,4 @@
 export * from './ASCall'
 export * from './ASCallBase'
-export * from './ASDedumpedCall'
+export * from './ASCallDedumpedBase'
 export * from './Handlers'
