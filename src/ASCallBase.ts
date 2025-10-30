@@ -44,6 +44,9 @@ abstract class ASCallBase<
   readonly getArgs?:
     | GetArgs<TGetParams, ExtraWithCall<TExtraParams, TCallParams>>
     | undefined
+  readonly beforeCall?: (
+    ...args: ExtraWithCall<TExtraParams, TCallParams>
+  ) => void | Promise<void>
 
   readonly responseManager: ResponseManger<
     TPayload,
@@ -74,6 +77,7 @@ abstract class ASCallBase<
     this.name = options?.name ?? request.name
     this.handlers = options?.handlers
     this.getArgs = options?.getArgs
+    this.beforeCall = options?.beforeCall
   }
 
   protected async tryStatement(
@@ -83,6 +87,7 @@ abstract class ASCallBase<
     : TGetParams
   ) {
     const parameters = await this.parseArguments(...args)
+    await this.beforeCall?.(...parameters)
     const payload = await this.makeRequest(...parameters)
 
     return this.responseManager.succed(response, payload)

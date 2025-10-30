@@ -30,7 +30,7 @@ type Request<TCallParams extends unknown[], TPayload> = (
 interface Options<
   TPayload,
   TError,
-  TCallParams extends unknown[],
+  TExtraWithCall extends unknown[],
   TGetParams extends unknown[],
   TResponse extends Response<undefined, undefined, boolean>,
   TResponseSuccess extends Response<TPayload, undefined, true>,
@@ -49,9 +49,10 @@ interface Options<
   >,
 > {
   name?: string
-  getArgs?: GetArgs<TGetParams, TCallParams>
+  getArgs?: GetArgs<TGetParams, TExtraWithCall>
   handlers?: Partial<THandlers>
   responseManager: TResponseManager
+  beforeCall?: (...args: TExtraWithCall) => void | Promise<void>
   parseError: (error_: unknown) => TError | Promise<TError>
 }
 
