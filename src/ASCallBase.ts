@@ -1,5 +1,4 @@
 import type {
-  ConditionalParams,
   ExtraWithCall,
   GetArgs,
   Options,
@@ -80,12 +79,7 @@ abstract class ASCallBase<
     this.beforeCall = options?.beforeCall
   }
 
-  protected async tryStatement(
-    response: TResponse,
-    ...args: this['getArgs'] extends undefined ?
-      ExtraWithCall<TExtraParams, TCallParams>
-    : TGetParams
-  ) {
+  protected async tryStatement(response: TResponse, ...args: TGetParams) {
     const parameters = await this.parseArguments(...args)
     await this.beforeCall?.(...parameters)
     const payload = await this.makeRequest(...parameters)
@@ -95,20 +89,15 @@ abstract class ASCallBase<
 
   // Allows for full typesafety without passing parseArguments at instance declaration level
   protected async parseArguments(
-    ...args: ConditionalParams<
-      this['getArgs'],
-      TExtraParams,
-      TCallParams,
-      TGetParams
-    >
+    ...args: TGetParams
   ): Promise<ExtraWithCall<TExtraParams, TCallParams>> {
     // These casts are safe because the ternary condition mirrors the same conditional type logic used in the type of ...args.
     // - If getArgs is undefined, args already match ConditionalParams<TExtraParams, TCallParams>
     // - Otherwise, getArgs(...args) produces that same shape.
     const parameters =
       this.getArgs === undefined ?
-        (args as ExtraWithCall<TExtraParams, TCallParams>)
-      : await this.getArgs(...(args as TGetParams))
+        (args as unknown as ExtraWithCall<TExtraParams, TCallParams>)
+      : await this.getArgs(...args)
 
     return parameters
   }
@@ -116,10 +105,6 @@ abstract class ASCallBase<
   abstract makeRequest(
     ...parameters: ExtraWithCall<TExtraParams, TCallParams>
   ): Promise<TPayload>
-  // {
-  //   const payload = await this.request(...parameters)
-  //   return payload
-  // }
 
   async catchStatement(
     instance: TResponse | TResponseSuccess,
@@ -134,26 +119,11 @@ abstract class ASCallBase<
     return response
   }
 
-  call(
-    ...args: ConditionalParams<
-      this['getArgs'],
-      TExtraParams,
-      TCallParams,
-      TGetParams
-    >
-  ) {
+  call(...args: TGetParams) {
     return this.callWithOptions(undefined, ...args)
   }
 
-  async callWithOptions(
-    handlers?: Partial<THandlers>,
-    ...args: ConditionalParams<
-      this['getArgs'],
-      TExtraParams,
-      TCallParams,
-      TGetParams
-    >
-  ) {
+  async callWithOptions(handlers?: Partial<THandlers>, ...args: TGetParams) {
     const mergedHandlers = { ...this.handlers, ...handlers }
     let response: TResponse | TResponseFailure | TResponseSuccess =
       this.responseManager.init()
@@ -166,9 +136,10 @@ abstract class ASCallBase<
       response = await this.catchStatement(response, error_)
       mergedHandlers.onFailure?.(response)
     } finally {
-      mergedHandlers.onFinal?.(
-        this.finalStatement(response as TResponseFailure | TResponseSuccess)
+      response = this.finalStatement(
+        response as TResponseFailure | TResponseSuccess
       )
+      mergedHandlers.onFinal?.(response)
     }
 
     return response
