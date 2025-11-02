@@ -1,5 +1,5 @@
 import { ASCallBase } from './ASCallBase'
-import type { Options, PendingStore } from './ASCallDedumpedTypes'
+import type { Options, PendingStoreBase } from './ASCallDedumpedTypes'
 import type { ExtraWithCall, Request, ResponseManger } from './ASCallTypes'
 import type { Handlers } from './Handlers'
 import type { Response } from './Response/Response'
@@ -8,7 +8,7 @@ abstract class ASDedumpedCallBase<
   TPayload,
   TError extends Error,
   TCallParams extends unknown[],
-  TPendingStore extends PendingStore<TPayload, unknown>,
+  TPendingStore extends PendingStoreBase<TPayload>,
   TResponse extends Response<undefined, undefined, boolean>,
   TResponseSuccess extends Response<TPayload, undefined, true>,
   TResponseFailure extends Response<unknown, TError, false>,

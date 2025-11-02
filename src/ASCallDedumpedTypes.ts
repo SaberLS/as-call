@@ -5,22 +5,17 @@ import type {
 import type { Handlers } from './Handlers'
 import type { Response } from './Response/Response'
 
-interface PendingStore<TPayload, TKey = undefined> {
-  get(
-    ...args: TKey extends undefined ? [] : [key: TKey]
-  ): Promise<TPayload> | undefined
-  set(
-    ...args: TKey extends undefined ? [promise: Promise<TPayload>]
-    : [key: TKey, promise: Promise<TPayload>]
-  ): void
-  delete(...args: TKey extends undefined ? [] : [key: TKey]): void
+interface PendingStoreBase<TPayload> {
+  get(...args: unknown[]): Promise<TPayload> | undefined
+  set(...args: unknown[]): void
+  delete(...args: unknown[]): void
 }
 
 interface Options<
   TPayload,
   TError,
   TCallParams extends unknown[],
-  TPendingStore extends PendingStore<TPayload, unknown>,
+  TPendingStore extends PendingStoreBase<TPayload>,
   TGetParams extends unknown[],
   TResponse extends Response<undefined, undefined, boolean>,
   TResponseSuccess extends Response<TPayload, undefined, true>,
@@ -51,10 +46,29 @@ interface Options<
   pendingStore: TPendingStore
 }
 
-interface PendingStoreKeyed<TPayload, TKey> {
+interface PendingStore<TPayload> extends PendingStoreBase<TPayload> {
+  get(): Promise<TPayload> | undefined
+  set(promise: Promise<TPayload>): void
+  delete(): void
+}
+
+interface PendingStoreKeyed<TPayload, TKey> extends PendingStoreBase<TPayload> {
   get(key: TKey): Promise<TPayload> | undefined
   set(key: TKey, promise: Promise<TPayload>): void
   delete(key: TKey): void
 }
 
-export type { Options, PendingStore, PendingStoreKeyed }
+interface PendingStoreKeyedTimed<TPayload, TKey>
+  extends PendingStoreBase<TPayload> {
+  get(key: TKey, offset: number): Promise<TPayload> | undefined
+  set(key: TKey, promise: Promise<TPayload>): void
+  delete(key: TKey): void
+}
+
+export type {
+  Options,
+  PendingStore,
+  PendingStoreBase,
+  PendingStoreKeyed,
+  PendingStoreKeyedTimed,
+}

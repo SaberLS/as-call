@@ -1,19 +1,17 @@
 import { ASDedumpedCallBase } from './ASCallDedumpedBase'
 import { type PendingStore } from './ASCallDedumpedTypes'
-import type { ExtraWithCall } from './ASCallTypes'
 import type { Handlers } from './Handlers'
 import { Response } from './Response/Response'
 
 class ASCallDedumped<
   TPayload,
   TError extends Error,
-  TCallParams extends unknown[],
-  TPendingStore extends PendingStore<TPayload, undefined>,
+  TCallParams extends [],
+  TPendingStore extends PendingStore<TPayload>,
   TResponse extends Response<undefined, undefined, boolean>,
   TResponseSuccess extends Response<TPayload, undefined, true>,
   TResponseFailure extends Response<unknown, TError, false>,
-  TExtraParams extends unknown[] = [],
-  TGetParams extends unknown[] = ExtraWithCall<TExtraParams, TCallParams>,
+  TGetParams extends unknown[] = TCallParams,
   THandlers extends Handlers<
     [response: TResponse],
     TResponseSuccess,

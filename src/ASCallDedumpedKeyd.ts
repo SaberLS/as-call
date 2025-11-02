@@ -1,5 +1,6 @@
 import { ASDedumpedCallBase } from './ASCallDedumpedBase'
 import type { PendingStoreKeyed } from './ASCallDedumpedTypes'
+import type { ExtraWithCall, ResponseManger } from './ASCallTypes'
 
 import type { Handlers } from './Handlers'
 import { Response } from './Response/Response'
@@ -12,13 +13,26 @@ class ASCallDedumpedKeyed<
   TResponse extends Response<undefined, undefined, boolean>,
   TResponseSuccess extends Response<TPayload, undefined, true>,
   TResponseFailure extends Response<unknown, TError, false>,
-  TKey,
-  TGetParams extends unknown[] = TCallParams,
+  TKey = number,
+  TGetParams extends unknown[] = ExtraWithCall<[key: TKey], TCallParams>,
   THandlers extends Handlers<
     [response: TResponse],
     TResponseSuccess,
     TResponseFailure
   > = Handlers<[response: TResponse], TResponseSuccess, TResponseFailure>,
+  TResponseManager extends ResponseManger<
+    TPayload,
+    TError,
+    TResponse,
+    TResponseSuccess,
+    TResponseFailure
+  > = ResponseManger<
+    TPayload,
+    TError,
+    TResponse,
+    TResponseSuccess,
+    TResponseFailure
+  >,
 > extends ASDedumpedCallBase<
   TPayload,
   TError,
@@ -29,7 +43,8 @@ class ASCallDedumpedKeyed<
   TResponseFailure,
   [key: TKey],
   TGetParams,
-  THandlers
+  THandlers,
+  TResponseManager
 > {
   async makeRequest(key: TKey, ...parameters: TCallParams): Promise<TPayload> {
     let promise = this.pendingStore.get(key)
