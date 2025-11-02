@@ -1,4 +1,4 @@
-import { createConfig } from './src/createConfig.ts'
+import { createConfig } from './createConfig.mjs'
 
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'

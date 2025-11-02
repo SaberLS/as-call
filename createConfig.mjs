@@ -2,10 +2,9 @@ import eslint from '@eslint/js'
 import pluginJest from 'eslint-plugin-jest'
 import eslintPluginUnicorn from 'eslint-plugin-unicorn'
 import globals from 'globals'
-import type { Config, ConfigArray } from 'typescript-eslint'
 import tseslint from 'typescript-eslint'
 
-const createConfig = (__dirname: string): Config => {
+const createConfig = __dirname => {
   console.info({ __dirname })
   const ts = tseslint
     .config(
@@ -106,7 +105,7 @@ const createConfig = (__dirname: string): Config => {
     },
   ]
 
-  return baseEslintConfig as ConfigArray
+  return baseEslintConfig
 }
 
 export default createConfig
