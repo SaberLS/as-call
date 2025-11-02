@@ -1,16 +1,19 @@
+import type { Response, ResponseManger } from '../response'
+import type { Request } from '../types'
 import { ASCallBase } from './ASCallBase'
-import type { ResponseManger } from './ASCallTypes'
 import type { Handlers } from './Handlers'
-import { Response } from './Response/Response'
+import type { ASCallDedumpedOptions, PendingStoreBase } from './types'
 
-class ASCall<
+abstract class ASDedumpedCallBase<
   TPayload,
   TError extends Error,
   TCallParams extends unknown[],
+  TPendingStore extends PendingStoreBase<TPayload>,
   TResponse extends Response<undefined, undefined, boolean>,
   TResponseSuccess extends Response<TPayload, undefined, true>,
   TResponseFailure extends Response<unknown, TError, false>,
-  TGetParams extends unknown[] = TCallParams,
+  TExtraParams extends unknown[] = [],
+  TGetParams extends unknown[] = [...TExtraParams, ...TCallParams],
   THandlers extends Handlers<
     [response: TResponse],
     TResponseSuccess,
@@ -36,15 +39,33 @@ class ASCall<
   TResponse,
   TResponseSuccess,
   TResponseFailure,
-  [],
+  TExtraParams,
   TGetParams,
   THandlers,
   TResponseManager
 > {
-  async makeRequest(...parameters: TCallParams): Promise<TPayload> {
-    const payload = await this.request(...parameters)
-    return payload
+  protected pendingStore: TPendingStore
+
+  constructor(
+    request: Request<TCallParams, TPayload>,
+    options: ASCallDedumpedOptions<
+      TPayload,
+      TError,
+      [...TExtraParams, ...TCallParams],
+      TPendingStore,
+      TGetParams,
+      TResponse,
+      TResponseSuccess,
+      TResponseFailure,
+      THandlers,
+      TResponseManager
+    >
+  ) {
+    const { pendingStore, ...superOptions } = options
+    super(request, superOptions)
+
+    this.pendingStore = pendingStore
   }
 }
 
-export { ASCall }
+export { ASDedumpedCallBase }

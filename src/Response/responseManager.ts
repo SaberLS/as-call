@@ -1,13 +1,13 @@
-import type { ResponseManger } from '../ASCallTypes'
 import { Response } from './Response'
+import type { ResponseManger } from './types'
 
-function createResponseManager<TPayload, TError>(): ResponseManger<
+const createResponseManager = <TPayload, TError>(): ResponseManger<
   TPayload,
   TError,
   Response<undefined, undefined, boolean>,
   Response<TPayload, undefined, true>,
   Response<unknown, TError, false>
-> {
+> => {
   return {
     init() {
       return new Response(false, undefined, undefined)

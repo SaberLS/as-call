@@ -1,4 +1,4 @@
-import type { PendingStoreKeyedTimed } from './ASCallDedumpedTypes'
+import type { PendingStoreKeyedTimed } from './types'
 
 class PendingStoreTimedKeyed<TPayload, TKey>
   implements PendingStoreKeyedTimed<TPayload, TKey>

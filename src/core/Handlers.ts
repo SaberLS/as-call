@@ -1,4 +1,4 @@
-import { Response } from './Response/Response'
+import type { Response } from '../response'
 
 interface Handlers<
   TStart extends unknown[],

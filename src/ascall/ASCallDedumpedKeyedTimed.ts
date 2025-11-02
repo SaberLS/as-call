@@ -1,20 +1,20 @@
-import { ASDedumpedCallBase } from './ASCallDedumpedBase'
-import type { PendingStoreKeyed } from './ASCallDedumpedTypes'
-import type { ExtraWithCall, ResponseManger } from './ASCallTypes'
+import {
+  ASDedumpedCallBase,
+  type Handlers,
+  type PendingStoreKeyedTimed,
+} from '../core'
+import type { Response, ResponseManger } from '../response'
 
-import type { Handlers } from './Handlers'
-import { Response } from './Response/Response'
-
-class ASCallDedumpedKeyed<
+class ASCallDedumpedKeyedTimed<
   TPayload,
   TError extends Error,
   TCallParams extends unknown[],
-  TPendingStore extends PendingStoreKeyed<TPayload, TKey>,
+  TPendingStore extends PendingStoreKeyedTimed<TPayload, TKey>,
   TResponse extends Response<undefined, undefined, boolean>,
   TResponseSuccess extends Response<TPayload, undefined, true>,
   TResponseFailure extends Response<unknown, TError, false>,
   TKey = number,
-  TGetParams extends unknown[] = ExtraWithCall<[key: TKey], TCallParams>,
+  TGetParams extends unknown[] = TCallParams,
   THandlers extends Handlers<
     [response: TResponse],
     TResponseSuccess,
@@ -41,13 +41,17 @@ class ASCallDedumpedKeyed<
   TResponse,
   TResponseSuccess,
   TResponseFailure,
-  [key: TKey],
+  [key: TKey, offset: number],
   TGetParams,
   THandlers,
   TResponseManager
 > {
-  async makeRequest(key: TKey, ...parameters: TCallParams): Promise<TPayload> {
-    let promise = this.pendingStore.get(key)
+  async makeRequest(
+    key: TKey,
+    offset: number,
+    ...parameters: TCallParams
+  ): Promise<TPayload> {
+    let promise = this.pendingStore.get(key, offset)
 
     if (!promise) {
       promise = this.request(...parameters)
@@ -62,6 +66,4 @@ class ASCallDedumpedKeyed<
   }
 }
 
-export { ASCallDedumpedKeyed }
-
-export { type PendingStoreKeyed } from './ASCallDedumpedTypes'
+export { ASCallDedumpedKeyedTimed }

@@ -1,13 +1,10 @@
-import { ASDedumpedCallBase } from './ASCallDedumpedBase'
-import { type PendingStore } from './ASCallDedumpedTypes'
-import type { Handlers } from './Handlers'
-import { Response } from './Response/Response'
+import { ASCallBase, type Handlers } from '../core'
+import type { Response, ResponseManger } from '../response'
 
-class ASCallDedumped<
+class ASCall<
   TPayload,
   TError extends Error,
-  TCallParams extends [],
-  TPendingStore extends PendingStore<TPayload>,
+  TCallParams extends unknown[],
   TResponse extends Response<undefined, undefined, boolean>,
   TResponseSuccess extends Response<TPayload, undefined, true>,
   TResponseFailure extends Response<unknown, TError, false>,
@@ -17,32 +14,35 @@ class ASCallDedumped<
     TResponseSuccess,
     TResponseFailure
   > = Handlers<[response: TResponse], TResponseSuccess, TResponseFailure>,
-> extends ASDedumpedCallBase<
+  TResponseManager extends ResponseManger<
+    TPayload,
+    TError,
+    TResponse,
+    TResponseSuccess,
+    TResponseFailure
+  > = ResponseManger<
+    TPayload,
+    TError,
+    TResponse,
+    TResponseSuccess,
+    TResponseFailure
+  >,
+> extends ASCallBase<
   TPayload,
   TError,
   TCallParams,
-  TPendingStore,
   TResponse,
   TResponseSuccess,
   TResponseFailure,
   [],
   TGetParams,
-  THandlers
+  THandlers,
+  TResponseManager
 > {
   async makeRequest(...parameters: TCallParams): Promise<TPayload> {
-    let promise = this.pendingStore.get()
-
-    if (!promise) {
-      promise = this.request(...parameters)
-      this.pendingStore.set(promise)
-    }
-
-    try {
-      return await promise
-    } finally {
-      this.pendingStore.delete()
-    }
+    const payload = await this.request(...parameters)
+    return payload
   }
 }
 
-export { ASCallDedumped }
+export { ASCall }
