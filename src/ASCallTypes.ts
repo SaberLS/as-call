@@ -17,7 +17,7 @@ type ConditionalParams<
 type ExtraWithCall<
   TExtraParams extends unknown[],
   TCallParams extends unknown[],
-> = TExtraParams extends [] ? TCallParams : [...TExtraParams, ...TCallParams]
+> = [...TExtraParams, ...TCallParams]
 
 type GetArgs<TParams extends unknown[], TCallParams extends unknown[]> =
   | ((...args: TParams) => TCallParams)
@@ -64,15 +64,9 @@ interface ResponseManger<
   TResponseFailure extends Response<unknown, TError, false>,
 > {
   init(): TResponse
-  succed<T extends Response<unknown, unknown, boolean>>(
-    instance: T,
-    payload: TPayload
-  ): TResponseSuccess
+  succed(instance: TResponse, payload: TPayload): TResponseSuccess
 
-  fail<T extends TResponse | TResponseSuccess>(
-    instance: T,
-    error: TError
-  ): TResponseFailure
+  fail(instance: TResponse | TResponseSuccess, error: TError): TResponseFailure
 }
 
 export type {
