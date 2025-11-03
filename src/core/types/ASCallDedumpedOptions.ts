@@ -1,6 +1,6 @@
 import type { Response, ResponseManger } from '../../response'
-import type { Handlers } from '../Handlers'
 import type { ASCallBaseOptions } from './ASCallBaseOptions'
+import type { Handlers } from './Handlers'
 import type { PendingStoreBase } from './PendingStore'
 
 interface ASCallDedumpedOptions<

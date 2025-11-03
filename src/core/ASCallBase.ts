@@ -1,7 +1,7 @@
 import type { Response, ResponseManger } from '../response'
 import type { GetArgs, Request } from '../types'
-import type { Handlers } from './Handlers'
 import type { ASCallBaseOptions } from './types'
+import type { Handlers } from './types/Handlers'
 
 abstract class ASCallBase<
   TPayload,

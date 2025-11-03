@@ -1,6 +1,6 @@
 import type { Response, ResponseManger } from '../../response'
 import type { GetArgs } from '../../types'
-import type { Handlers } from '../Handlers'
+import type { Handlers } from './Handlers'
 
 interface ASCallBaseOptions<
   TPayload,

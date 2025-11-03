@@ -1,8 +1,8 @@
 import type { Response, ResponseManger } from '../response'
 import type { Request } from '../types'
 import { ASCallBase } from './ASCallBase'
-import type { Handlers } from './Handlers'
 import type { ASCallDedumpedOptions, PendingStoreBase } from './types'
+import type { Handlers } from './types/Handlers'
 
 abstract class ASDedumpedCallBase<
   TPayload,
