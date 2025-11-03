@@ -21,9 +21,13 @@ class PendingStoreTimedKeyed<TPayload, TKey>
 
   set(key: TKey, promise: Promise<TPayload>): void {
     this.pendingMap.set(key, promise)
-    void promise.then(r =>
-      this.succededMap.set(key, { payload: r, timestamp: Date.now() })
-    )
+    void promise
+      .then(r =>
+        this.succededMap.set(key, { payload: r, timestamp: Date.now() })
+      )
+      .catch(() => {
+        return
+      })
   }
 
   delete(key: TKey): void {
