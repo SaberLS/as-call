@@ -18,6 +18,7 @@ const config = {
     '/node_modules/',
     '/__tests__/',
     '/dist/',
+    '/types/',
     String.raw`/index\.(ts|js)$`,
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
