@@ -1,7 +1,16 @@
 {
   "name": "ascall",
   "version": "1.0.0",
-  "description": "asynchronous action wrapper",
+  "description": "A lightweight async call handler with built-in error and response management",
+  "keywords": [
+    "async",
+    "request",
+    "typescript",
+    "response-manager",
+    "error-handling",
+    "promise",
+    "api-call"
+  ],
   "license": "ISC",
   "author": "saberls",
   "type": "module",
