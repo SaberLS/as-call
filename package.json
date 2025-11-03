@@ -3,19 +3,25 @@
   "version": "1.0.0",
   "description": "asynchronous action wrapper",
   "license": "ISC",
-  "author": "",
+  "author": "saberls",
   "type": "module",
-  "main": "index.js",
-  "types": "./dist/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "clean": "rimraf dist",
+    "build": "node esbuild.config.js && tsc -p tsconfig.json",
+    "clean": "rimraf dist && rimraf tsconfig.tsbuildinfo",
     "clean:all": "rimraf dist node_modules",
     "clean:restart": "npm clean && npm install",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "lint:check": "eslint \"**/*.{ts,tsx,mts,cts,cjs,mjs,js,jsx,md}\"",
     "lint:fix": "eslint --fix \"**/*.{ts,tsx,mts,cts,cjs,mjs,js,jsx,md}\"",
+    "prebild": "npm clean",
     "prepare": "husky",
+    "prepublishOnly": "npm run build",
     "test": "jest --config jest.config.mjs",
     "test:types": "tsd"
   },
@@ -29,14 +35,15 @@
       "prettier --write"
     ]
   },
-  "dependencies": {},
   "devDependencies": {
     "@eslint/js": "^9.34.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.3.0",
     "@typescript-eslint/eslint-plugin": "^8.41.0",
     "@typescript-eslint/parser": "^8.41.0",
+    "esbuild": "^0.25.12",
     "esbuild-jest": "^0.5.0",
+    "esbuild-node-externals": "^1.18.0",
     "eslint": "^9.34.0",
     "eslint-plugin-jest": "^29.0.1",
     "eslint-plugin-unicorn": "^60.0.0",
