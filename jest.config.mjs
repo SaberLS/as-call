@@ -14,6 +14,12 @@ const config = {
   },
   testEnvironment: 'node',
   testRegex: '(/__tests__/.*(.|/)(test|spec)).(ts|tsx|js|jsx)$',
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    '/__tests__/',
+    '/dist/',
+    String.raw`/index\.(ts|js)$`,
+  ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   transformIgnorePatterns: [],
