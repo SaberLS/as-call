@@ -1,8 +1,6 @@
-import type { Config } from 'jest'
-
 console.log(`✅ Loaded Jest config from: ${import.meta.dirname}`)
 
-const config: Config = {
+const config = {
   transform: {
     '^.+\\.(ts|tsx|js|jsx)$': [
       'esbuild-jest',
