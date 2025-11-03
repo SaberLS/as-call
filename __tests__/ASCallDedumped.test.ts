@@ -1,6 +1,8 @@
-import { ASCallDedumped } from '../src/ASCallDedumped'
-import type { ResponseManger } from '../src/ASCallTypes'
-import { Response } from '../src/Response/Response'
+import { ASCallDedumped } from '../src/ASCall'
+import { parseError } from '../src/core/parseError'
+import type { ResponseManger } from '../src/response'
+import { Response } from '../src/response/Response'
+import { createResponseManager } from '../src/response/responseManager'
 
 describe('ASCallDedumped primitive cases', () => {
   it('should dedump calls', async () => {
@@ -10,32 +12,6 @@ describe('ASCallDedumped primitive cases', () => {
     }
     let pending: Promise<void> | undefined
 
-    const responseManager: ResponseManger<
-      void,
-      Error,
-      Response<undefined, undefined, boolean>,
-      Response<void, undefined, true>,
-      Response<unknown, Error, false>
-    > = {
-      init(): Response<undefined, undefined, boolean> {
-        return new Response(false, undefined, undefined)
-      },
-
-      succed(instance, payload) {
-        return new Response(true, payload, undefined)
-      },
-
-      fail(instance, error) {
-        return new Response(false, instance.getPayload(), error)
-      },
-    }
-
-    const parseError = (error_: unknown): Error => {
-      if (error_ instanceof Error) return error_
-
-      return new Error('Unknown Error', { cause: error_ })
-    }
-
     const dedumped = new ASCallDedumped(testF, {
       pendingStore: {
         get: () => pending,
@@ -44,7 +20,7 @@ describe('ASCallDedumped primitive cases', () => {
         },
         delete: () => (pending = undefined),
       },
-      responseManager,
+      responseManager: createResponseManager<void, Error>(),
       parseError,
     })
 

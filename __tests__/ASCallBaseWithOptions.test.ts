@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/require-await */ //async is used to return promises
+import { ASCall } from '../src/ASCall'
+import { parseError } from '../src/core'
+import { createResponseManager } from '../src/response'
 import { MockHandlers } from './MockHandlers'
-import { TestASCall } from './TestASCall'
 
 describe('ASCallBase.callWithOptions', () => {
   beforeEach(() => {
@@ -13,7 +15,11 @@ describe('ASCallBase.callWithOptions', () => {
     })
 
     const defaultHandlers = new MockHandlers()
-    const instance = new TestASCall(requestMock, { handlers: defaultHandlers })
+    const instance = new ASCall(requestMock, {
+      handlers: defaultHandlers,
+      parseError,
+      responseManager: createResponseManager<string, Error>(),
+    })
 
     await instance.call(1, 2)
 
@@ -31,7 +37,11 @@ describe('ASCallBase.callWithOptions', () => {
     const defaultHandlers = new MockHandlers()
     const customHandlers = new MockHandlers()
 
-    const instance = new TestASCall(requestMock, { handlers: defaultHandlers })
+    const instance = new ASCall(requestMock, {
+      handlers: defaultHandlers,
+      parseError,
+      responseManager: createResponseManager<string, Error>(),
+    })
 
     await instance.callWithOptions(customHandlers, 'A')
 
@@ -48,19 +58,24 @@ describe('ASCallBase.callWithOptions', () => {
 
   it('invokes custom onFailure/onFinal in error case', async () => {
     const error = new Error('boom')
+
     const requestMock = jest.fn(async () => {
       throw error
     })
+
     const defaultHandlers = new MockHandlers()
-    const instance = new TestASCall(requestMock, { handlers: defaultHandlers })
+    const instance = new ASCall(requestMock, {
+      handlers: defaultHandlers,
+      parseError,
+      responseManager: createResponseManager<never, Error>(),
+    })
 
     const customHandlers = {
       onFailure: jest.fn(),
       onFinal: jest.fn(),
     }
 
-    // @ts-expect-error Expected 0-1 arguments, but got 3.ts(2554) passing wrong amount of arguments is part of the test
-    await instance.callWithOptions(customHandlers, 1, 2)
+    await instance.callWithOptions(customHandlers)
 
     // Custom failure handler
     expect(customHandlers.onFailure).toHaveBeenCalled()
@@ -74,7 +89,11 @@ describe('ASCallBase.callWithOptions', () => {
   it('falls back to default handlers when custom ones missing', async () => {
     const requestMock = jest.fn(async (a: number, b: number) => `sum:${a + b}`)
     const defaultHandlers = new MockHandlers()
-    const instance = new TestASCall(requestMock, { handlers: defaultHandlers })
+    const instance = new ASCall(requestMock, {
+      handlers: defaultHandlers,
+      parseError,
+      responseManager: createResponseManager<string, Error>(),
+    })
 
     const partial = {
       onStart: jest.fn(),
