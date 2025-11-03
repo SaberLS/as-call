@@ -1,6 +1,9 @@
 # TypeScript incremental build cache
 *.tsbuildinfo
 
+# test coverage report
+coverage
+
 # Logs
 logs
 *.log
