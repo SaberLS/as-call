@@ -16,7 +16,7 @@
     "lint:check": "eslint \"**/*.{ts,tsx,mts,cts,cjs,mjs,js,jsx,md}\"",
     "lint:fix": "eslint --fix \"**/*.{ts,tsx,mts,cts,cjs,mjs,js,jsx,md}\"",
     "prepare": "husky",
-    "test": "jest --config __tests__/jest.config.ts",
+    "test": "jest --config jest.config.mjs",
     "test:types": "tsd"
   },
   "lint-staged": {
