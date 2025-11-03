@@ -1,6 +1,7 @@
 export * from './ASCallBase'
 export * from './ASCallDedumpedBase'
 export * from './parseError'
+export * from './PendingStoreSimple'
 export * from './PendingStoreTimedKeyed'
 export * from './types'
 export * from './types/Handlers'
