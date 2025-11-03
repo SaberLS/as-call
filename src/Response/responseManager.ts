@@ -12,7 +12,7 @@ const createResponseManager = <TPayload, TError>(): ResponseManger<
     init() {
       return new Response(false, undefined, undefined)
     },
-    succed(instance, payload) {
+    succed(_instance, payload) {
       return new Response(true, payload, undefined)
     },
     fail(instance, error) {
