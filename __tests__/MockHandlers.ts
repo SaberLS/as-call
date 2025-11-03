@@ -1,5 +1,5 @@
-import type { Handlers } from '../src/Handlers'
-import { Response } from '../src/Response/Response'
+import type { Handlers } from '../src/core'
+import { Response } from '../src/response'
 
 class MockHandlers<
   TStart extends unknown[],
