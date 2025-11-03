@@ -70,4 +70,39 @@ describe('ASCallBase', () => {
     expect(getArgsMock).toHaveBeenCalledWith('5')
     expect(requestMock).toHaveBeenCalledWith(5, 10)
   })
+
+  it('should use beforeCall if provided', async () => {
+    const beforeCallMock = jest.fn((): void => {
+      return
+    })
+
+    const requestMock = jest.fn(async () => 'requestMock')
+
+    const instance = new ASCall(requestMock, {
+      beforeCall: beforeCallMock,
+      parseError,
+      responseManager: createResponseManager<string, Error>(),
+    })
+    await instance.call()
+
+    expect(beforeCallMock).toHaveBeenCalled()
+  })
+
+  it('should pass arguments to beforeCall if provided', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const beforeCallMock = jest.fn((x: string): void => {
+      return
+    })
+
+    const requestMock = jest.fn(async (x: string) => x)
+
+    const instance = new ASCall(requestMock, {
+      beforeCall: beforeCallMock,
+      parseError,
+      responseManager: createResponseManager<string, Error>(),
+    })
+    await instance.call('X')
+
+    expect(beforeCallMock).toHaveBeenCalledWith('X')
+  })
 })
