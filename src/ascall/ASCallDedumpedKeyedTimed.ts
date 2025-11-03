@@ -13,8 +13,8 @@ class ASCallDedumpedKeyedTimed<
   TResponse extends Response<undefined, undefined, boolean>,
   TResponseSuccess extends Response<TPayload, undefined, true>,
   TResponseFailure extends Response<unknown, TError, false>,
-  TKey = number,
-  TGetParams extends unknown[] = TCallParams,
+  TKey,
+  TGetParams extends unknown[] = [key: TKey, offset: number, ...TCallParams],
   THandlers extends Handlers<
     [response: TResponse],
     TResponseSuccess,
