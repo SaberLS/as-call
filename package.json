@@ -11,15 +11,15 @@
     "dist"
   ],
   "scripts": {
+    "prebuild": "npm run clean",
     "build": "node esbuild.config.js && tsc -p tsconfig.json",
     "clean": "rimraf dist && rimraf tsconfig.tsbuildinfo",
     "clean:all": "rimraf dist node_modules",
-    "clean:restart": "npm clean && npm install",
+    "clean:restart": "npm run clean && npm install",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "lint:check": "eslint \"**/*.{ts,tsx,mts,cts,cjs,mjs,js,jsx,md}\"",
     "lint:fix": "eslint --fix \"**/*.{ts,tsx,mts,cts,cjs,mjs,js,jsx,md}\"",
-    "prebild": "npm clean",
     "prepare": "husky",
     "prepublishOnly": "npm run build",
     "test": "jest --config jest.config.mjs",
